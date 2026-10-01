@@ -4,17 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'نظام إدارة المستودع') }}</title>
-    
+    <title>{{ \App\Models\Setting::get('site_name', config('app.name')) }}</title>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-sans antialiased bg-gray-50 text-gray-900" x-data="{ sidebarOpen: false }">
 
     <div class="flex h-screen overflow-hidden">
-        
+
+        <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false" x-transition.opacity class="fixed inset-0 z-40 bg-black/40 md:hidden"></div>
+
         <aside class="flex flex-col w-64 bg-[#005f8a] text-white transition-transform transform fixed inset-y-0 right-0 z-50 md:relative md:translate-x-0 shadow-xl" 
                :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'">
             
@@ -90,7 +89,7 @@
                 </button>
                 <div class="flex-1"></div>
                 <div class="flex items-center gap-3">
-                    <span class="font-bold text-sm text-[#00a8e8]">{{ Auth::user()->name ?? 'رئيس القسم' }}</span>
+                    <a href="{{ route('profile.edit') }}" title="الملف الشخصي" class="font-bold text-sm text-[#00a8e8] hover:text-[#0073a8]">{{ Auth::user()->name }}</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" title="تسجيل الخروج" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors focus:outline-none">

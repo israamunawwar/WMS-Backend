@@ -4,11 +4,9 @@
     <meta charset="utf-8">
     <title>{{ $pageTitle }}</title>
     <style>
-        /* استدعاء خط يدعم الترميز والتشبيك العربي داخل الـ PDF */
-        @import url('https://fonts.googleapis.com/css2?family=Amiri&display=swap');
-        
-        body { 
-            font-family: 'Amiri', serif; 
+        /* DejaVu Sans مضمّن مع mPDF ويدعم العربية بالكامل (لا يحتاج اتصالاً بالإنترنت) */
+        body {
+            font-family: 'dejavusans', sans-serif;
             direction: rtl; 
             text-align: right; 
             padding: 20px;

@@ -1,3 +1,10 @@
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* يمنع ظهور النوافذ المنبثقة (x-cloak) لحظة تحميل الصفحة قبل تشغيل Alpine */
+[x-cloak] {
+    display: none !important;
+}

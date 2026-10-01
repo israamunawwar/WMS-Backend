@@ -7,8 +7,9 @@ use App\Models\Maintenance;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\ItemsExport;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 
 class ItemController extends Controller
 {
@@ -59,8 +60,30 @@ class ItemController extends Controller
         $data = $this->getFilteredData($request->type);
         $items = $data['items'];
         $pageTitle = $data['pageTitle'];
-        
-        $pdf = Pdf::loadView('items.pdf', compact('items', 'pageTitle'));
-        return $pdf->download('inventory_report.pdf');
+
+        $html = view('items.pdf', compact('items', 'pageTitle'))->render();
+
+        // mPDF يدعم ربط الحروف العربية والاتجاه من اليمين لليسار (على عكس DomPDF)
+        $tempDir = storage_path('app/mpdf');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0775, true);
+        }
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'directionality' => 'rtl',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'tempDir' => $tempDir,
+        ]);
+        $mpdf->SetTitle($pageTitle);
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', Destination::STRING_RETURN), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="inventory_report.pdf"',
+        ]);
     }
 }

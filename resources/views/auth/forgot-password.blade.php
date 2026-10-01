@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>استعادة كلمة المرور</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="font-sans antialiased bg-gray-100">
     <div class="absolute top-0 w-full h-64 bg-[#005f8a] shadow-lg z-0 rounded-b-[50px]"></div>
