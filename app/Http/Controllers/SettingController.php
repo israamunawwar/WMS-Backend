@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Category;
+use App\Models\Location;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,9 @@ class SettingController extends Controller
         ];
 
         $categories = Category::withCount('items')->orderBy('name')->get();
+        $locations = Location::withCount('items')->orderBy('section')->orderBy('cabinet_number')->get();
 
-        return view('settings.index', compact('settings', 'categories'));
+        return view('settings.index', compact('settings', 'categories', 'locations'));
     }
 
     public function update(Request $request)
@@ -64,5 +66,34 @@ class SettingController extends Controller
         ActivityLog::record('category_delete', "حذف التصنيف \"{$category->name}\"");
 
         return back()->with('success', 'تم حذف التصنيف.');
+    }
+
+    public function storeLocation(Request $request)
+    {
+        $data = $request->validate([
+            'section' => 'required|string|max:100',
+            'cabinet_number' => 'required|string|max:50',
+            'shelf' => 'nullable|string|max:50',
+        ]);
+
+        $location = Location::create($data);
+
+        ActivityLog::record('location_create', "أضاف موقع التخزين \"{$location->label}\"");
+
+        return back()->with('success', 'تمت إضافة موقع التخزين بنجاح.');
+    }
+
+    public function destroyLocation(Location $location)
+    {
+        // حذف الموقع يفرّغ موقع المواد (set null) فنمنعه إذا كان مستخدماً حتى لا تفقد المواد مكانها
+        if ($location->items()->exists()) {
+            return back()->with('error', 'لا يمكن حذف موقع تخزين تُوجد فيه مواد. انقلي المواد أولاً.');
+        }
+
+        $location->delete();
+
+        ActivityLog::record('location_delete', "حذف موقع التخزين \"{$location->label}\"");
+
+        return back()->with('success', 'تم حذف موقع التخزين.');
     }
 }

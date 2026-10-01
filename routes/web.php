@@ -38,6 +38,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:super_admin|admin'])->group(function () {
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
+    // إدارة المواد
+    Route::post('/items', [ItemController::class, 'store'])->name('items.store');
+    Route::put('/items/{item}', [ItemController::class, 'update'])->name('items.update');
+    Route::post('/items/{item}/restock', [ItemController::class, 'restock'])->name('items.restock');
+    Route::delete('/items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
+
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
     Route::post('/inventory/count', [InventoryController::class, 'count'])->name('inventory.count');
@@ -52,6 +58,8 @@ Route::middleware(['auth', 'verified', 'role:super_admin|admin'])->group(functio
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
     Route::post('/settings/categories', [SettingController::class, 'storeCategory'])->name('settings.categories.store');
     Route::delete('/settings/categories/{category}', [SettingController::class, 'destroyCategory'])->name('settings.categories.destroy');
+    Route::post('/settings/locations', [SettingController::class, 'storeLocation'])->name('settings.locations.store');
+    Route::delete('/settings/locations/{location}', [SettingController::class, 'destroyLocation'])->name('settings.locations.destroy');
 });
 
 // تسوية الفروقات واعتماد الجرد: رئيس القسم فقط

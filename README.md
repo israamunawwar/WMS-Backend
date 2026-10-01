@@ -13,7 +13,8 @@ Built with **Laravel 12**, Blade, Alpine.js and Tailwind CSS. The interface is A
 | **Authentication** | Login/logout, password reset, profile page. Public registration is **disabled** — accounts are created by staff. Deactivated accounts cannot sign in. |
 | **Roles & permissions** | Three roles (Spatie Permission): *Super Admin* (department head), *Admin* (warehouse keeper), *Trainer*. Enforced on the server, and links are hidden in the UI per role. |
 | **Dashboard** | Live statistics: stock levels (total / low / out of stock / damaged / most used), order counters, top lab and top trainer. |
-| **Items & categories** | Browse and filter (all, low stock, missing, damaged, most used) and export to **Excel** / **PDF**. Categories are managed from *Settings*. |
+| **Items** | Full management for staff: add, edit, delete, and **restock** (receive goods). Search by name/barcode, filter by category or status (low stock, missing, damaged, most used), export the filtered list to **Excel** / **PDF**. Balances are never edited by hand — they change through orders, inventory and restocking, so every change has an audit trail. Items with history (orders, inventory, maintenance) cannot be deleted. |
+| **Categories & storage locations** | Managed from *Settings* (section / cabinet / shelf). A category or location in use cannot be deleted. |
 | **Orders** | Trainers create material requests with item lines. Staff approve or reject with mandatory notes. **Approval checks and deducts stock** atomically. Trainers only see their own orders. Search and status filters. |
 | **Annual inventory** | Start a session (snapshots current stock) → record counted quantities → head resolves differences (stock is adjusted) → head approves and closes (balances carry forward as the next opening balance). |
 | **Maintenance** | Report a fault, then committee decisions: send to repair, replace, scrap, mark fixed (with cost). Workflow rules prevent invalid transitions. |
@@ -25,7 +26,8 @@ Built with **Laravel 12**, Blade, Alpine.js and Tailwind CSS. The interface is A
 
 | | Super Admin | Admin (warehouse keeper) | Trainer |
 |---|:---:|:---:|:---:|
-| Dashboard, items, categories | ✅ | ✅ | ✅ |
+| Dashboard, view items, export | ✅ | ✅ | ✅ |
+| Add / edit / delete / restock items | ✅ | ✅ | ❌ |
 | Create orders / see own orders | ✅ | ✅ | ✅ (own only) |
 | Approve / reject orders | ✅ | ✅ | ❌ |
 | Start inventory, enter counts | ✅ | ✅ | ❌ |
@@ -78,7 +80,7 @@ The seeder also creates sample categories, items, orders, maintenance records an
 php artisan test
 ```
 
-The suite covers access control per role, the inventory workflow, orders and stock deduction, maintenance, reports and exports.
+The suite covers access control per role, item management, the inventory workflow, orders and stock deduction, maintenance, reports and exports.
 
 ### Development
 
@@ -90,7 +92,6 @@ npm run dev          # Vite dev server with hot reload
 
 Honest list of what is **not** done yet:
 
-- [ ] **Item management UI** — create / edit / delete items and storage locations (items are currently seeded or inserted directly; the *Items* page is read-only plus export)
 - [ ] Equipment kits (tables exist, no UI)
 - [ ] Lab records (table exists; orders currently use a free-text destination)
 - [ ] In-app notifications (table exists, no UI)

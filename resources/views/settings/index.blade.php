@@ -77,6 +77,32 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:col-span-2">
+            <h3 class="font-black text-gray-800 mb-4 border-r-4 border-teal-500 pr-3">مواقع التخزين</h3>
+            <form method="POST" action="{{ route('settings.locations.store') }}" class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+                @csrf
+                <input type="text" name="section" required placeholder="القسم (مثال: مستودع الشبكات)" class="border-gray-200 rounded-xl text-sm px-3 py-2">
+                <input type="text" name="cabinet_number" required placeholder="رقم الخزانة" class="border-gray-200 rounded-xl text-sm px-3 py-2">
+                <input type="text" name="shelf" placeholder="الرف (اختياري)" class="border-gray-200 rounded-xl text-sm px-3 py-2">
+                <button type="submit" class="bg-gray-100 text-gray-600 font-bold px-4 py-2 rounded-xl text-sm hover:bg-gray-200">إضافة موقع</button>
+            </form>
+            <div class="flex flex-wrap gap-2">
+                @forelse($locations as $location)
+                    <span class="bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-teal-100 flex items-center gap-2">
+                        {{ $location->label }}
+                        <span class="text-teal-400 font-normal">({{ $location->items_count }})</span>
+                        <form method="POST" action="{{ route('settings.locations.destroy', $location) }}" onsubmit="return confirm('حذف موقع التخزين؟')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-teal-400 hover:text-red-500" title="حذف">×</button>
+                        </form>
+                    </span>
+                @empty
+                    <p class="text-xs text-gray-400 font-bold">لا توجد مواقع تخزين بعد.</p>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:col-span-2">
             <h3 class="font-black text-gray-800 mb-4 border-r-4 border-orange-500 pr-3">حالات المواد (للاطلاع)</h3>
             <div class="flex flex-wrap gap-3">
                 <div class="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl bg-gray-50">

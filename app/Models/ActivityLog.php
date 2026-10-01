@@ -18,6 +18,8 @@ class ActivityLog extends Model
         'user' => 'المستخدمون',
         'setting' => 'الإعدادات',
         'category' => 'الأصناف',
+        'location' => 'مواقع التخزين',
+        'item' => 'المواد',
     ];
 
     protected $fillable = ['user_id', 'action', 'description'];
