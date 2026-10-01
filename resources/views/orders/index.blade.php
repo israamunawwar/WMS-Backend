@@ -3,7 +3,7 @@
         viewModal: false, 
         actionModal: false, 
         actionType: '', 
-        selectedOrder: { id: '', requester: '', type: '' } 
+        selectedOrder: { id: '', requester: '', type: '', destination: '', status: '', notes: '' }
     }">
 
         @if(session('success'))
@@ -71,7 +71,7 @@
                         @forelse($orders ?? [] as $order)
                         <tr class="hover:bg-gray-50/50 transition-colors">
                             <td class="px-6 py-4 font-black text-[#005f8a]">#ORD-{{ $order->id }}</td>
-                            <td class="px-6 py-4 font-bold text-gray-800">مستخدم ({{ $order->user_id ?? 'غير محدد' }})</td>
+                            <td class="px-6 py-4 font-bold text-gray-800">{{ $order->user?->name ?? 'غير محدد' }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ $order->destination ?? 'غير محدد' }}</td>
                             <td class="px-6 py-4 text-gray-500">{{ $order->created_at ? $order->created_at->format('Y-m-d') : '-' }}</td>
                             <td class="px-6 py-4">
@@ -84,12 +84,25 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 flex justify-center gap-2">
-                                <button @click="selectedOrder = {id: '{{ $order->id }}', requester: 'مستخدم {{ $order->user_id ?? '' }}', type: 'عادي'}, viewModal = true" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">التفاصيل</button>
-                                
-                                @if($order->status == 'بانتظار الاعتماد' || $order->status == 'جديد')
-                                    <button @click="selectedOrder = {id: '{{ $order->id }}'}, actionType = 'موافقة', actionModal = true" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 shadow-md shadow-green-100">قبول</button>
-                                    <button @click="selectedOrder = {id: '{{ $order->id }}'}, actionType = 'رفض', actionModal = true" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors">رفض</button>
-                                @endif
+                                @php
+                                    $details = [
+                                        'id' => $order->id,
+                                        'requester' => $order->user?->name ?? 'غير محدد',
+                                        'type' => $order->priority,
+                                        'destination' => $order->destination,
+                                        'status' => $order->status,
+                                        'notes' => $order->notes,
+                                        'pending' => $order->isAwaitingDecision(),
+                                    ];
+                                @endphp
+                                <button @click="selectedOrder = @js($details), viewModal = true" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">التفاصيل</button>
+
+                                @hasanyrole('super_admin|admin')
+                                    @if($order->isAwaitingDecision())
+                                        <button @click="selectedOrder = @js($details), actionType = 'موافقة', actionModal = true" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 shadow-md shadow-green-100">قبول</button>
+                                        <button @click="selectedOrder = @js($details), actionType = 'رفض', actionModal = true" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors">رفض</button>
+                                    @endif
+                                @endhasanyrole
                             </td>
                         </tr>
                         @empty
@@ -101,6 +114,9 @@
                     </tbody>
                 </table>
             </div>
+            @if($orders->hasPages())
+                <div class="p-4 border-t border-gray-100">{{ $orders->links() }}</div>
+            @endif
         </div>
 
         <div x-show="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" x-transition x-cloak>
@@ -121,6 +137,18 @@
                         <span class="text-[10px] text-gray-400 font-bold uppercase block">درجة الحساسية</span>
                         <span class="text-xs font-black text-red-600" x-text="selectedOrder.type == 'حساس' ? 'عالية جداً - تتطلب تدقيق' : 'عادية'"></span>
                     </div>
+                    <div>
+                        <span class="text-[10px] text-gray-400 font-bold uppercase block">الوجهة (المخبر)</span>
+                        <span class="text-sm font-bold text-gray-800" x-text="selectedOrder.destination || 'غير محدد'"></span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-400 font-bold uppercase block">الحالة</span>
+                        <span class="text-sm font-bold text-gray-800" x-text="selectedOrder.status"></span>
+                    </div>
+                    <div class="col-span-2" x-show="selectedOrder.notes">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase block">ملاحظات القرار</span>
+                        <span class="text-sm text-gray-700" x-text="selectedOrder.notes"></span>
+                    </div>
                 </div>
 
                 <div class="mb-8">
@@ -133,10 +161,12 @@
                     </div>
                 </div>
 
-                <div class="flex gap-3">
-                    <button @click="viewModal = false, actionType = 'موافقة', actionModal = true" class="flex-1 bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 shadow-lg shadow-green-100">اعتماد وموافقة</button>
-                    <button @click="viewModal = false, actionType = 'رفض', actionModal = true" class="flex-1 bg-red-50 text-red-600 font-black py-3 rounded-xl hover:bg-red-100">رفض الطلب</button>
-                </div>
+                @hasanyrole('super_admin|admin')
+                    <div class="flex gap-3" x-show="selectedOrder.pending">
+                        <button @click="viewModal = false, actionType = 'موافقة', actionModal = true" class="flex-1 bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 shadow-lg shadow-green-100">اعتماد وموافقة</button>
+                        <button @click="viewModal = false, actionType = 'رفض', actionModal = true" class="flex-1 bg-red-50 text-red-600 font-black py-3 rounded-xl hover:bg-red-100">رفض الطلب</button>
+                    </div>
+                @endhasanyrole
             </div>
         </div>
 

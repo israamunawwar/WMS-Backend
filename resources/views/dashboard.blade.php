@@ -28,7 +28,7 @@
 
             <a href="{{ route('items.index', ['type' => 'most_used']) }}" class="block bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-green-300 transition-all transform hover:-translate-y-1">
                 <p class="text-xs font-bold text-gray-500">أكثر المواد استخداماً</p>
-                <p class="text-sm font-bold text-green-600 mt-2">كابلات (Cat6)</p>
+                <p class="text-sm font-bold text-green-600 mt-2">{{ $mostUsedItemName }}</p>
             </a>
 
             <a href="{{ route('items.index', ['type' => 'damaged']) }}" class="block bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-red-300 transition-all transform hover:-translate-y-1">

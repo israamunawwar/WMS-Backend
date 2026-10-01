@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\Maintenance;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -16,10 +17,12 @@ class ItemController extends Controller
         $pageTitle = "جميع المواد";
 
         if ($type == 'low_stock') {
-            $query->where('current_stock', '<=', 5);
+            // منخفضة وليست نافدة (النافدة تظهر في "المواد الناقصة")
+            $query->where('current_stock', '>', 0)->where('current_stock', '<=', 5);
             $pageTitle = "المواد منخفضة المخزون";
         } elseif ($type == 'damaged') {
-            $query->where('id', '<', 0); // مؤقت لحين إضافة عمود الحالة
+            // المواد التي لديها سجل صيانة غير مكتمل (قيد الانتظار أو الإصلاح أو الإتلاف)
+            $query->whereIn('id', Maintenance::where('status', '!=', 'fixed')->select('item_id'));
             $pageTitle = "المواد التالفة";
         } elseif ($type == 'missing') {
             $query->where('current_stock', 0); // المواد الناقصة هي التي رصيدها صفر
