@@ -19,6 +19,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     /** الطلبات التي تنتظر قراراً (جديدة أو بانتظار الاعتماد). */
     public function scopeAwaitingDecision(Builder $query): Builder
     {

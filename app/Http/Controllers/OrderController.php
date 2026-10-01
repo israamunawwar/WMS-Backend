@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\Item;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -21,7 +23,7 @@ class OrderController extends Controller
         $pendingCount = (clone $base)->awaitingDecision()->count();
         $approvedCount = (clone $base)->where('status', Order::APPROVED)->count();
 
-        $query = (clone $base)->with('user');
+        $query = (clone $base)->with(['user', 'items.item']);
         $pageTitle = 'جميع الطلبات';
 
         // الفلاتر القادمة من الداشبورد
@@ -60,7 +62,47 @@ class OrderController extends Controller
 
         $orders = $query->latest()->paginate(15)->withQueryString();
 
-        return view('orders.index', compact('orders', 'pageTitle', 'pendingCount', 'approvedCount'));
+        // المواد المتاحة للاختيار في نموذج الطلب الجديد
+        $availableItems = Item::where('current_stock', '>', 0)
+            ->orderBy('name_en')
+            ->get(['id', 'name_ar', 'name_en', 'current_stock']);
+
+        return view('orders.index', compact('orders', 'pageTitle', 'pendingCount', 'approvedCount', 'availableItems'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'destination' => 'required|string|max:255',
+            'priority' => 'required|in:عادي,حساس',
+            'items' => 'required|array|min:1',
+            'items.*.item_id' => 'required|integer|distinct|exists:items,id',
+            'items.*.quantity' => 'required|integer|min:1|max:100000',
+        ]);
+
+        $order = DB::transaction(function () use ($request, $data) {
+            $order = Order::create([
+                'user_id' => $request->user()->id,
+                'destination' => $data['destination'],
+                'priority' => $data['priority'],
+                'status' => Order::NEW,
+            ]);
+
+            $order->items()->createMany(collect($data['items'])->map(fn ($row) => [
+                'item_id' => $row['item_id'],
+                'quantity' => $row['quantity'],
+            ])->all());
+
+            return $order;
+        });
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'create_order',
+            'description' => "أنشأ الطلب #ORD-{$order->id} إلى \"{$order->destination}\" ويحتوي ".count($data['items']).' مادة',
+        ]);
+
+        return back()->with('success', "تم إرسال الطلب #ORD-{$order->id} بنجاح.");
     }
 
     public function updateStatus(Request $request, Order $order)
@@ -70,16 +112,47 @@ class OrderController extends Controller
             'notes' => 'required|string|max:1000',
         ]);
 
-        if (! $order->isAwaitingDecision()) {
-            return back()->with('error', 'تم البت في هذا الطلب مسبقاً ولا يمكن تغيير قراره.');
-        }
-
         $approved = $request->action === 'موافقة';
 
-        $order->update([
-            'status' => $approved ? Order::APPROVED : Order::REJECTED,
-            'notes' => $request->notes,
-        ]);
+        // القفل يمنع قرارين متزامنين على نفس الطلب أو خصماً مزدوجاً من المخزون
+        $error = DB::transaction(function () use ($order, $request, $approved) {
+            $order = Order::lockForUpdate()->find($order->id);
+
+            if (! $order->isAwaitingDecision()) {
+                return 'تم البت في هذا الطلب مسبقاً ولا يمكن تغيير قراره.';
+            }
+
+            if ($approved) {
+                $lines = $order->items()->get()->map(fn ($line) => [
+                    'item' => Item::lockForUpdate()->find($line->item_id),
+                    'quantity' => $line->quantity,
+                ]);
+
+                // نتحقق من كل المواد أولاً حتى لا يُخصم بعضها ويفشل الباقي
+                foreach ($lines as $line) {
+                    if ($line['item']->current_stock < $line['quantity']) {
+                        $name = $line['item']->name_ar ?? $line['item']->name_en;
+
+                        return "الكمية المطلوبة من «{$name}» ({$line['quantity']}) أكبر من المتوفر في المستودع ({$line['item']->current_stock}).";
+                    }
+                }
+
+                foreach ($lines as $line) {
+                    $line['item']->decrement('current_stock', $line['quantity']);
+                }
+            }
+
+            $order->update([
+                'status' => $approved ? Order::APPROVED : Order::REJECTED,
+                'notes' => $request->notes,
+            ]);
+
+            return null;
+        });
+
+        if ($error) {
+            return back()->with('error', $error);
+        }
 
         ActivityLog::create([
             'user_id' => $request->user()->id,
@@ -87,6 +160,6 @@ class OrderController extends Controller
             'description' => "قام بـ{$request->action} على الطلب #ORD-{$order->id} مع ملاحظة: \"{$request->notes}\"",
         ]);
 
-        return back()->with('success', "تم {$request->action} الطلب بنجاح.");
+        return back()->with('success', "تم {$request->action} الطلب بنجاح.".($approved ? ' وتم خصم المواد من المستودع.' : ''));
     }
 }

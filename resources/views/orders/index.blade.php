@@ -3,7 +3,12 @@
         viewModal: false, 
         actionModal: false, 
         actionType: '', 
-        selectedOrder: { id: '', requester: '', type: '', destination: '', status: '', notes: '' }
+        selectedOrder: { id: '', requester: '', type: '', destination: '', status: '', notes: '', items: [] },
+        newOrderModal: {{ $errors->any() && old('items') ? 'true' : 'false' }},
+        rows: @js(old('items') ? array_values(old('items')) : [['item_id' => '', 'quantity' => 1]]),
+        stock: @js($availableItems->pluck('current_stock', 'id')),
+        addRow() { this.rows.push({ item_id: '', quantity: 1 }) },
+        removeRow(i) { if (this.rows.length > 1) this.rows.splice(i, 1) }
     }">
 
         @if(session('success'))
@@ -16,6 +21,15 @@
                 {{ session('error') }}
             </div>
         @endif
+        @if($errors->any())
+            <div class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
@@ -23,7 +37,11 @@
                 <p class="text-gray-500 text-sm mt-1">مشاهدة ومعالجة طلبات المواد (الموافقة والرفض مع ذكر السبب).</p>
             </div>
             
-            <div class="flex gap-3">
+            <div class="flex gap-3 items-center">
+                <button @click="newOrderModal = true" class="bg-[#00a8e8] hover:bg-[#0073a8] text-white font-bold py-2.5 px-5 rounded-xl shadow-md transition-all flex items-center gap-2 text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    طلب جديد
+                </button>
                 <div class="bg-orange-50 border border-orange-100 px-4 py-2 rounded-xl">
                     <span class="block text-[10px] text-orange-600 font-bold">طلبات بانتظارك</span>
                     <span class="text-lg font-black text-orange-700">{{ $pendingCount ?? 0 }}</span>
@@ -92,6 +110,10 @@
                                         'destination' => $order->destination,
                                         'status' => $order->status,
                                         'notes' => $order->notes,
+                                        'items' => $order->items->map(fn ($line) => [
+                                            'name' => $line->item?->name_ar ?? $line->item?->name_en ?? 'مادة محذوفة',
+                                            'quantity' => $line->quantity,
+                                        ])->values(),
                                         'pending' => $order->isAwaitingDecision(),
                                     ];
                                 @endphp
@@ -117,6 +139,56 @@
             @if($orders->hasPages())
                 <div class="p-4 border-t border-gray-100">{{ $orders->links() }}</div>
             @endif
+        </div>
+
+        <div x-show="newOrderModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" x-transition>
+            <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto" @click.away="newOrderModal = false">
+                <h3 class="text-xl font-black text-[#005f8a] mb-4">طلب مواد جديد</h3>
+                <form action="{{ route('orders.store') }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">الوجهة (المخبر / القسم)</label>
+                            <input type="text" name="destination" value="{{ old('destination') }}" required class="w-full border-gray-200 rounded-xl text-sm px-3 py-2.5" placeholder="مثال: مخبر الشبكات (Lab 3)">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">درجة الحساسية</label>
+                            <select name="priority" class="w-full border-gray-200 rounded-xl text-sm px-3 py-2.5">
+                                <option value="عادي" @selected(old('priority') === 'عادي')>عادي</option>
+                                <option value="حساس" @selected(old('priority') === 'حساس')>حساس</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-xs font-bold text-gray-700">المواد المطلوبة</label>
+                            <button type="button" @click="addRow()" class="text-xs font-bold text-[#00a8e8] hover:text-[#0073a8]">+ إضافة مادة</button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="(row, i) in rows" :key="i">
+                                <div class="flex gap-2 items-center">
+                                    <select :name="'items[' + i + '][item_id]'" x-model="row.item_id" required class="flex-1 border-gray-200 rounded-xl text-sm px-3 py-2.5">
+                                        <option value="">اختر المادة...</option>
+                                        @foreach($availableItems as $item)
+                                            <option value="{{ $item->id }}">{{ $item->name_ar ?? $item->name_en }} (المتوفر: {{ $item->current_stock }})</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="number" min="1" :max="stock[row.item_id] || null" :name="'items[' + i + '][quantity]'" x-model="row.quantity" required class="w-24 border-gray-200 rounded-xl text-sm px-3 py-2.5" placeholder="الكمية">
+                                    <button type="button" @click="removeRow(i)" class="p-2 text-gray-400 hover:text-red-500" title="حذف" :class="rows.length === 1 && 'opacity-30 cursor-not-allowed'">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="newOrderModal = false" class="px-4 py-2 border rounded-xl text-sm font-bold text-gray-500">إلغاء</button>
+                        <button type="submit" class="px-4 py-2 bg-[#00a8e8] text-white rounded-xl text-sm font-bold shadow-md hover:bg-[#0073a8]">إرسال الطلب</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div x-show="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" x-transition x-cloak>
@@ -154,10 +226,13 @@
                 <div class="mb-8">
                     <h4 class="font-black text-gray-700 mb-4 border-r-4 border-[#00a8e8] pr-3 text-sm">المواد المطلوبة</h4>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
-                            <span class="text-sm font-bold text-gray-700">مواد تقنية عامة</span>
-                            <span class="bg-[#005f8a] text-white px-3 py-1 rounded-lg text-xs font-black">حسب الطلب</span>
-                        </div>
+                        <template x-for="line in selectedOrder.items" :key="line.name">
+                            <div class="flex justify-between items-center bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
+                                <span class="text-sm font-bold text-gray-700" x-text="line.name"></span>
+                                <span class="bg-[#005f8a] text-white px-3 py-1 rounded-lg text-xs font-black" x-text="'× ' + line.quantity"></span>
+                            </div>
+                        </template>
+                        <p x-show="!selectedOrder.items || selectedOrder.items.length === 0" class="text-xs text-gray-400 font-bold">لا توجد مواد مسجلة لهذا الطلب.</p>
                     </div>
                 </div>
 
