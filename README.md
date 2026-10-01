@@ -1,59 +1,103 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Warehouse Management System (WMS)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based system for managing the IT department's warehouse and lab equipment at **Damascus Intermediate Institute**: stock tracking, material requests from trainers, annual stock-take, maintenance, audit trail and reports.
 
-## About Laravel
+Built with **Laravel 12**, Blade, Alpine.js and Tailwind CSS. The interface is Arabic (RTL).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> 🎓 Academic project, under active development. See [What works today](#-what-works-today) and the [Roadmap](#-roadmap) for the honest status.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ What works today
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Area | Capabilities |
+|---|---|
+| **Authentication** | Login/logout, password reset, profile page. Public registration is **disabled** — accounts are created by staff. Deactivated accounts cannot sign in. |
+| **Roles & permissions** | Three roles (Spatie Permission): *Super Admin* (department head), *Admin* (warehouse keeper), *Trainer*. Enforced on the server, and links are hidden in the UI per role. |
+| **Dashboard** | Live statistics: stock levels (total / low / out of stock / damaged / most used), order counters, top lab and top trainer. |
+| **Items & categories** | Browse and filter (all, low stock, missing, damaged, most used) and export to **Excel** / **PDF**. Categories are managed from *Settings*. |
+| **Orders** | Trainers create material requests with item lines. Staff approve or reject with mandatory notes. **Approval checks and deducts stock** atomically. Trainers only see their own orders. Search and status filters. |
+| **Annual inventory** | Start a session (snapshots current stock) → record counted quantities → head resolves differences (stock is adjusted) → head approves and closes (balances carry forward as the next opening balance). |
+| **Maintenance** | Report a fault, then committee decisions: send to repair, replace, scrap, mark fixed (with cost). Workflow rules prevent invalid transitions. |
+| **Audit log** | Searchable timeline of orders, inventory, users, maintenance and settings actions. |
+| **Reports** | Six reports (inventory, orders, annual inventory, damaged items, maintenance, trainer custody) with a date range, on-screen preview, and **PDF / Excel** export. |
+| **Settings** | Low-stock threshold (applied across the app), default loan duration, system name, category management. |
 
-## Learning Laravel
+### Roles at a glance
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| | Super Admin | Admin (warehouse keeper) | Trainer |
+|---|:---:|:---:|:---:|
+| Dashboard, items, categories | ✅ | ✅ | ✅ |
+| Create orders / see own orders | ✅ | ✅ | ✅ (own only) |
+| Approve / reject orders | ✅ | ✅ | ❌ |
+| Start inventory, enter counts | ✅ | ✅ | ❌ |
+| Resolve differences, approve inventory | ✅ | ❌ | ❌ |
+| Maintenance, reports, audit log, settings | ✅ | ✅ | ❌ |
+| Manage users | all users and roles | trainers only | ❌ |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Tech stack
 
-## Laravel Sponsors
+Laravel 12 · PHP 8.2+ · SQLite (default) or MySQL · Blade · Alpine.js · Tailwind CSS (Vite) · [spatie/laravel-permission](https://github.com/spatie/laravel-permission) · [maatwebsite/excel](https://github.com/SpartnerNL/Laravel-Excel) · [mPDF](https://mpdf.github.io/) (Arabic PDF support)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+All front-end assets are bundled locally by Vite — the app works without internet access.
 
-### Premium Partners
+## 🚀 Getting started
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Requirements:** PHP 8.2+ with `mbstring`, `gd`, `zip`, `xml` · Composer · Node.js 20.19+ (or 22.12+)
 
-## Contributing
+```bash
+git clone https://github.com/israamunawwar/WMS-Backend.git
+cd WMS-Backend
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+composer install
+npm install && npm run build
 
-## Code of Conduct
+cp .env.example .env
+php artisan key:generate
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+touch database/database.sqlite        # SQLite (default). For MySQL, edit the DB_* values in .env instead.
+php artisan migrate --seed
+php artisan serve
+```
 
-## Security Vulnerabilities
+Open http://localhost:8000.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Demo accounts
 
-## License
+Created by the seeder, for **local development only** (change or remove them before any real deployment):
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Email | Password | Role |
+|---|---|---|
+| head@it.edu | password123 | Super Admin |
+| warehouse@it.edu | password123 | Admin (warehouse keeper) |
+| trainer@it.edu | password123 | Trainer |
+
+The seeder also creates sample categories, items, orders, maintenance records and settings, and is safe to run more than once.
+
+### Running the tests
+
+```bash
+php artisan test
+```
+
+The suite covers access control per role, the inventory workflow, orders and stock deduction, maintenance, reports and exports.
+
+### Development
+
+```bash
+npm run dev          # Vite dev server with hot reload
+```
+
+## 🧭 Roadmap
+
+Honest list of what is **not** done yet:
+
+- [ ] **Item management UI** — create / edit / delete items and storage locations (items are currently seeded or inserted directly; the *Items* page is read-only plus export)
+- [ ] Equipment kits (tables exist, no UI)
+- [ ] Lab records (table exists; orders currently use a free-text destination)
+- [ ] In-app notifications (table exists, no UI)
+- [ ] Barcode scanning (items have a barcode field; no scanner flow)
+- [ ] REST API for a mobile client
+- [ ] Email verification (disabled by design for now)
+
+## 👩‍💻 Author
+
+**Israa Munawwar** — [GitHub](https://github.com/israamunawwar)
