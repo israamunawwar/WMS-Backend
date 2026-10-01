@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class MaintenanceLog extends Model
 {
-    //
+    protected $fillable = ['item_id', 'reported_by', 'issue_description', 'status'];
 }

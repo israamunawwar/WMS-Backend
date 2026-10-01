@@ -102,9 +102,11 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                     
+                                    @role('super_admin')
                                     <button @click="selectedUser = {id: '{{ $user->id }}', name: '{{ addslashes($user->name) }}', role: '{{ $userRole }}', is_active: {{ $user->is_active ? 1 : 0 }} }, roleModal = true" class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="تغيير صلاحية الدور">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                     </button>
+                                    @endrole
 
                                     <button @click="selectedUser = {id: '{{ $user->id }}', name: '{{ addslashes($user->name) }}', is_active: {{ $user->is_active ? 1 : 0 }} }, passwordModal = true" class="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="إعادة تعيين كلمة السر">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
@@ -143,8 +145,10 @@
                         <label class="block text-xs font-bold text-gray-700 mb-1">تحديد صلاحية الدور</label>
                         <select name="role" class="w-full border-gray-200 rounded-xl text-sm px-3 py-2.5">
                             <option value="trainer">مدرب</option>
-                            <option value="admin">أمين مستودع</option>
-                            <option value="super_admin">رئيس قسم</option>
+                            @role('super_admin')
+                                <option value="admin">أمين مستودع</option>
+                                <option value="super_admin">رئيس قسم</option>
+                            @endrole
                         </select>
                     </div>
                     <div>
@@ -181,6 +185,7 @@
             </div>
         </div>
 
+        @role('super_admin')
         <div x-show="roleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" x-transition x-cloak>
             <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl" @click.away="roleModal = false">
                 <h3 class="text-lg font-black text-indigo-900 mb-2">تغيير دور الصلاحية</h3>
@@ -203,6 +208,7 @@
                 </form>
             </div>
         </div>
+        @endrole
 
         <div x-show="passwordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" x-transition x-cloak>
             <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl" @click.away="passwordModal = false">

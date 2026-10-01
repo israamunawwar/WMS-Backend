@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 
@@ -14,10 +15,15 @@ class UserController extends Controller
     {
         $query = User::query();
 
-        if ($request->has('search') && $request->search) {
+        // أمين المستودع يرى المدربين فقط
+        if (! $this->isHead()) {
+            $query->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['super_admin', 'admin']));
+        }
+
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$search}%")
+                                       ->orWhere('email', 'like', "%{$search}%"));
         }
 
         $users = $query->with('roles')->orderBy('id', 'desc')->get();
@@ -31,7 +37,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'string', Password::defaults()],
-            'role' => 'required|string|exists:roles,name',
+            // أمين المستودع يستطيع إنشاء حسابات المدربين فقط
+            'role' => ['required', 'string', 'exists:roles,name', Rule::in($this->assignableRoles())],
         ]);
 
         $user = User::create([
@@ -48,6 +55,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $this->authorizeTarget($user);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
@@ -78,6 +87,8 @@ class UserController extends Controller
 
     public function resetPassword(Request $request, User $user)
     {
+        $this->authorizeTarget($user);
+
         $request->validate([
             'password' => ['required', 'string', Password::defaults()],
         ]);
@@ -91,6 +102,8 @@ class UserController extends Controller
 
     public function toggleStatus(User $user)
     {
+        $this->authorizeTarget($user);
+
         if (auth()->id() === $user->id) {
             return back()->with('error', 'لا يمكنك تعطيل حسابك الخاص.');
         }
@@ -104,6 +117,8 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $this->authorizeTarget($user);
+
         if (auth()->id() === $user->id) {
             return back()->with('error', 'لا يمكنك حذف حسابك الخاص.');
         }
@@ -115,6 +130,23 @@ class UserController extends Controller
         $user->delete();
 
         return back()->with('success', 'تم حذف المستخدم بنجاح.');
+    }
+
+    private function isHead(): bool
+    {
+        return auth()->user()->hasRole('super_admin');
+    }
+
+    /** الأدوار التي يحق للمستخدم الحالي إسنادها. */
+    private function assignableRoles(): array
+    {
+        return $this->isHead() ? Role::pluck('name')->all() : ['trainer'];
+    }
+
+    /** أمين المستودع لا يتعامل مع حسابات رئيس القسم أو أمناء المستودع الآخرين. */
+    private function authorizeTarget(User $user): void
+    {
+        abort_if(! $this->isHead() && $user->hasAnyRole(['super_admin', 'admin']), 403);
     }
 
     private function isLastSuperAdmin(User $user): bool

@@ -39,8 +39,7 @@ Route::middleware(['auth', 'verified', 'role:super_admin|admin'])->group(functio
 
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
-    Route::post('/inventory/resolve', [InventoryController::class, 'resolve'])->name('inventory.resolve');
-    Route::post('/inventory/close', [InventoryController::class, 'close'])->name('inventory.close');
+    Route::post('/inventory/count', [InventoryController::class, 'count'])->name('inventory.count');
 
     Route::get('/maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
@@ -48,10 +47,18 @@ Route::middleware(['auth', 'verified', 'role:super_admin|admin'])->group(functio
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 });
 
-// إدارة المستخدمين: رئيس القسم فقط
+// تسوية الفروقات واعتماد الجرد: رئيس القسم فقط
 Route::middleware(['auth', 'verified', 'role:super_admin'])->group(function () {
-    Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
+    Route::post('/inventory/resolve', [InventoryController::class, 'resolve'])->name('inventory.resolve');
+    Route::post('/inventory/close', [InventoryController::class, 'close'])->name('inventory.close');
+
+    // تغيير الأدوار: رئيس القسم فقط
     Route::patch('users/{user}/role', [UserController::class, 'updateRole'])->name('users.updateRole');
+});
+
+// إدارة المستخدمين: رئيس القسم كاملاً، وأمين المستودع على المدربين فقط (تُفرض داخل UserController)
+Route::middleware(['auth', 'verified', 'role:super_admin|admin'])->group(function () {
+    Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
     Route::patch('users/{user}/password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
     Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
 });

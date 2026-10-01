@@ -39,11 +39,11 @@
                     <span class="{{ request()->routeIs('categories.*') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">الأصناف</span>
                 </a>
                 
-                @role('super_admin')
+                @hasanyrole('super_admin|admin')
                 <a href="{{ route('users.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('users.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('users.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">إدارة المستخدمين</span>
                 </a>
-                @endrole
+                @endhasanyrole
                 
                 <a href="{{ route('orders.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('orders.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('orders.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">إدارة الطلبات</span>

@@ -54,12 +54,56 @@ class AccessControlTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $target->id]);
     }
 
-    public function test_warehouse_admin_cannot_manage_users(): void
+    public function test_warehouse_admin_can_manage_trainers_only(): void
     {
         $admin = $this->userWithRole('admin');
+        $trainer = $this->userWithRole('trainer');
+        $head = $this->userWithRole('super_admin');
+        $otherAdmin = $this->userWithRole('admin');
 
-        $this->actingAs($admin)->get('/users')->assertForbidden();
+        $this->actingAs($admin)->get('/users')->assertOk()
+            ->assertSee($trainer->email)
+            ->assertDontSee($head->email)
+            ->assertDontSee($otherAdmin->email);
+
+        // يستطيع إنشاء مدرب
+        $this->actingAs($admin)->post('/users', [
+            'name' => 'مدرب جديد', 'email' => 'new@it.edu', 'password' => 'password123', 'role' => 'trainer',
+        ])->assertSessionHas('success');
+        $this->assertTrue(User::where('email', 'new@it.edu')->first()->hasRole('trainer'));
+
+        // يستطيع تعطيل مدرب وإعادة تعيين كلمة سره
+        $this->actingAs($admin)->patch("/users/{$trainer->id}/status")->assertSessionHas('success');
+        $this->assertFalse($trainer->fresh()->is_active);
+        $this->actingAs($admin)->patch("/users/{$trainer->id}/password", ['password' => 'newpassword123'])->assertSessionHas('success');
+    }
+
+    public function test_warehouse_admin_cannot_escalate_privileges(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $head = $this->userWithRole('super_admin');
+        $otherAdmin = $this->userWithRole('admin');
+
+        // لا يستطيع إنشاء حسابات بأدوار أعلى
+        foreach (['super_admin', 'admin'] as $role) {
+            $this->actingAs($admin)->post('/users', [
+                'name' => 'X', 'email' => "$role@it.edu", 'password' => 'password123', 'role' => $role,
+            ])->assertSessionHasErrors('role');
+        }
+
+        // لا يستطيع تغيير أي دور
         $this->actingAs($admin)->patch("/users/{$admin->id}/role", ['role' => 'super_admin'])->assertForbidden();
+
+        // لا يستطيع لمس رئيس القسم أو أمين آخر
+        foreach ([$head, $otherAdmin] as $target) {
+            $this->actingAs($admin)->put("/users/{$target->id}", ['name' => 'x', 'email' => 'x@it.edu'])->assertForbidden();
+            $this->actingAs($admin)->patch("/users/{$target->id}/password", ['password' => 'newpassword123'])->assertForbidden();
+            $this->actingAs($admin)->patch("/users/{$target->id}/status")->assertForbidden();
+            $this->actingAs($admin)->delete("/users/{$target->id}")->assertForbidden();
+        }
+
+        $this->assertTrue($head->fresh()->is_active);
+        $this->assertTrue($admin->fresh()->hasRole('admin'));
     }
 
     public function test_trainer_cannot_open_admin_pages_or_approve_orders(): void
