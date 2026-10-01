@@ -39,33 +39,45 @@
                     <span class="{{ request()->routeIs('categories.*') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">الأصناف</span>
                 </a>
                 
+                @role('super_admin')
                 <a href="{{ route('users.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('users.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('users.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">إدارة المستخدمين</span>
                 </a>
+                @endrole
                 
                 <a href="{{ route('orders.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('orders.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('orders.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">إدارة الطلبات</span>
                 </a>
                 
+                @hasanyrole('super_admin|admin')
                <a href="{{ route('inventory.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('inventory.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('inventory.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">الجرد السنوي</span>
                 </a>
+                @endhasanyrole
                 
+                @hasanyrole('super_admin|admin')
                 <a href="{{ route('maintenance.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('maintenance.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('maintenance.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">الصيانة والتوالف</span>
                 </a>
+                @endhasanyrole
                 
+                @hasanyrole('super_admin|admin')
                <a href="{{ route('reports.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('reports.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('reports.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">التقارير والتصدير</span>
                 </a>
+                @endhasanyrole
                 
+                @hasanyrole('super_admin|admin')
                 <a href="{{ route('logs.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('logs.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('logs.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">سجل العمليات</span>
                 </a>
+                @endhasanyrole
                 
+                @hasanyrole('super_admin|admin')
                 <a href="{{ route('settings.index') }}" class="flex items-center px-4 py-2.5 rounded-lg transition-colors {{ request()->routeIs('settings.index') ? 'bg-[#004d73] shadow-inner border-r-4 border-[#00a8e8]' : 'hover:bg-[#0073a8]' }}">
                     <span class="{{ request()->routeIs('settings.index') ? 'font-bold text-white' : 'font-semibold text-gray-200 hover:text-white' }}">إعدادات النظام</span>
                 </a>
+                @endhasanyrole
             </nav>
         </aside>
 

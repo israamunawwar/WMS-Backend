@@ -50,6 +50,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (! Auth::user()->is_active) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'هذا الحساب معطّل. يرجى مراجعة رئيس القسم.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -29,7 +30,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => ['required', 'string', Password::defaults()],
             'role' => 'required|string|exists:roles,name',
         ]);
 
@@ -66,6 +67,10 @@ class UserController extends Controller
             'role' => 'required|string|exists:roles,name',
         ]);
 
+        if ($request->role !== 'super_admin' && $this->isLastSuperAdmin($user)) {
+            return back()->with('error', 'لا يمكن تغيير دور آخر رئيس قسم في النظام.');
+        }
+
         $user->syncRoles([$request->role]);
 
         return back()->with('success', 'تم تحديث صلاحية المستخدم بنجاح.');
@@ -74,7 +79,7 @@ class UserController extends Controller
     public function resetPassword(Request $request, User $user)
     {
         $request->validate([
-            'password' => 'required|string|min:8',
+            'password' => ['required', 'string', Password::defaults()],
         ]);
 
         $user->update([
@@ -103,8 +108,18 @@ class UserController extends Controller
             return back()->with('error', 'لا يمكنك حذف حسابك الخاص.');
         }
 
+        if ($this->isLastSuperAdmin($user)) {
+            return back()->with('error', 'لا يمكن حذف آخر رئيس قسم في النظام.');
+        }
+
         $user->delete();
 
         return back()->with('success', 'تم حذف المستخدم بنجاح.');
+    }
+
+    private function isLastSuperAdmin(User $user): bool
+    {
+        return $user->hasRole('super_admin')
+            && User::role('super_admin')->count() <= 1;
     }
 }
