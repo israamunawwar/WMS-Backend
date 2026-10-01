@@ -96,11 +96,7 @@ class OrderController extends Controller
             return $order;
         });
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'create_order',
-            'description' => "أنشأ الطلب #ORD-{$order->id} إلى \"{$order->destination}\" ويحتوي ".count($data['items']).' مادة',
-        ]);
+        ActivityLog::record('create_order', "أنشأ الطلب #ORD-{$order->id} إلى \"{$order->destination}\" ويحتوي ".count($data['items']).' مادة');
 
         return back()->with('success', "تم إرسال الطلب #ORD-{$order->id} بنجاح.");
     }
@@ -154,11 +150,7 @@ class OrderController extends Controller
             return back()->with('error', $error);
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => $approved ? 'approve_order' : 'reject_order',
-            'description' => "قام بـ{$request->action} على الطلب #ORD-{$order->id} مع ملاحظة: \"{$request->notes}\"",
-        ]);
+        ActivityLog::record($approved ? 'approve_order' : 'reject_order', "قام بـ{$request->action} على الطلب #ORD-{$order->id} مع ملاحظة: \"{$request->notes}\"");
 
         return back()->with('success', "تم {$request->action} الطلب بنجاح.".($approved ? ' وتم خصم المواد من المستودع.' : ''));
     }

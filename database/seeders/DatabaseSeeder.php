@@ -2,43 +2,56 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Item;
-use App\Models\Order;
 use App\Models\Category;
+use App\Models\Item;
+use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+    public function run(): void
+    {
+        $this->call(RolesAndAdminSeeder::class);
 
-    /**
-     * Seed the application's database.
-     */
-public function run(): void
-{
-    $this->call([
-        RolesAndAdminSeeder::class,
-        SystemSeeder::class,
-    ]);
+        $this->seedCatalog();
 
-    // إضافة تصنيفات أولاً (لأن الـ items بيعتمدوا عليها)
-    $cat = \App\Models\Category::create(['name' => 'أجهزة حاسوب']);
+        // هذه تعتمد على وجود المستخدمين والمواد أعلاه
+        $this->call([
+            SystemSeeder::class,
+            OrderSeeder::class,
+        ]);
+    }
 
-    // إضافة مواد بأسماء الأعمدة الصحيحة
-    \App\Models\Item::create([
-        'name_en' => 'Dell Monitor',
-        'name_ar' => 'شاشة ديل',
-        'current_stock' => 5,
-        'category_id' => $cat->id
-    ]);
+    private function seedCatalog(): void
+    {
+        $catalog = [
+            'أجهزة حاسوب' => [
+                ['Dell Monitor', 'شاشة ديل', 'IT-001', 20, 5],
+                ['Keyboard', 'لوحة مفاتيح', 'IT-002', 40, 32],
+                ['Mouse', 'ماوس', 'IT-003', 40, 3],
+            ],
+            'معدات شبكات' => [
+                ['Cisco Router', 'راوتر سيسكو', 'NET-001', 8, 8],
+                ['RJ45 Connector', 'رؤوس RJ45', 'NET-002', 500, 120],
+                ['Cat6 Cable (m)', 'كابل Cat6 (متر)', 'NET-003', 500, 310],
+            ],
+            'كابلات ووصلات' => [
+                ['HDMI Cable', 'كابل HDMI', 'CAB-001', 30, 2],
+                ['VGA Cable', 'كابل VGA', 'CAB-002', 15, 0],
+            ],
+        ];
 
-    \App\Models\Item::create([
-        'name_en' => 'HDMI Cable',
-        'name_ar' => 'كابل HDMI',
-        'current_stock' => 2,
-        'category_id' => $cat->id
-    ]);
-}
+        foreach ($catalog as $categoryName => $items) {
+            $category = Category::firstOrCreate(['name' => $categoryName]);
+
+            foreach ($items as [$nameEn, $nameAr, $barcode, $initial, $current]) {
+                Item::firstOrCreate(['barcode' => $barcode], [
+                    'name_en' => $nameEn,
+                    'name_ar' => $nameAr,
+                    'category_id' => $category->id,
+                    'initial_balance' => $initial,
+                    'current_stock' => $current,
+                ]);
+            }
+        }
+    }
 }

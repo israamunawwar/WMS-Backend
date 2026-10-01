@@ -35,7 +35,7 @@
                     <td class="px-6 py-4 font-bold text-gray-800">{{ $item->name_ar ?? 'غير محدد' }}</td>
                     <td class="px-6 py-4 text-gray-600">{{ $item->name_en }}</td>
                     <td class="px-6 py-4 text-gray-500">{{ $item->initial_balance }}</td>
-                    <td class="px-6 py-4 font-black {{ $item->current_stock <= 5 ? 'text-red-500' : 'text-green-600' }}">
+                    <td class="px-6 py-4 font-black {{ $item->current_stock <= \App\Models\Setting::lowStockThreshold() ? 'text-red-500' : 'text-green-600' }}">
                         {{ $item->current_stock }}
                     </td>
                 </tr>

@@ -2,47 +2,55 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\InventoryAudit;
-use App\Models\Maintenance;
 use App\Models\ActivityLog;
+use App\Models\Item;
+use App\Models\Maintenance;
 use App\Models\Setting;
 use App\Models\User;
-use App\Models\Item;
+use Illuminate\Database\Seeder;
 
 class SystemSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // 1. إعدادات افتراضية
-        Setting::insert([
-            ['key' => 'site_name', 'value' => 'نظام إدارة المستودعات', 'type' => 'string'],
-            ['key' => 'maintenance_mode', 'value' => '0', 'type' => 'boolean'],
-            ['key' => 'currency', 'value' => 'ل.س', 'type' => 'string'],
-        ]);
+        foreach ([
+            ['site_name', 'نظام إدارة المستودعات', 'string'],
+            ['low_stock_threshold', '5', 'integer'],
+            ['default_borrow_days', '14', 'integer'],
+        ] as [$key, $value, $type]) {
+            Setting::firstOrCreate(['key' => $key], ['value' => $value, 'type' => $type]);
+        }
 
-        // 2. سجلات جرد
-        InventoryAudit::create([
-            'title' => 'الجرد السنوي لعام 2024',
-            'scheduled_date' => now()->addDays(10),
-            'status' => 'pending',
-            'notes' => 'جرد شامل لمخبر الشبكات والبرمجيات.'
-        ]);
+        $head = User::where('email', 'head@it.edu')->first();
+        $monitor = Item::where('barcode', 'IT-001')->first();
+        $router = Item::where('barcode', 'NET-001')->first();
 
-        // 3. سجلات الأنشطة (Activity Logs)
-        $user = User::first();
-        if ($user) {
-            ActivityLog::insert([
-                ['user_id' => $user->id, 'action' => 'login', 'description' => 'تسجيل دخول للنظام', 'created_at' => now(), 'updated_at' => now()],
-                ['user_id' => $user->id, 'action' => 'create_item', 'description' => 'إضافة مادة جديدة للمستودع', 'created_at' => now(), 'updated_at' => now()],
+        if ($monitor && Maintenance::count() === 0) {
+            Maintenance::create([
+                'item_id' => $monitor->id,
+                'reported_by' => $head?->id,
+                'description' => 'تلف في شاشة العرض',
+                'status' => Maintenance::PENDING,
             ]);
         }
 
-        // 4. سجلات الصيانة
-        $item = Item::first();
-        if ($item) {
-            Maintenance::create(['item_id' => $item->id, 'description' => 'عطل في اللوحة الأم', 'status' => 'repairing', 'cost' => 50000]);
-            Maintenance::create(['item_id' => $item->id, 'description' => 'تلف في شاشة العرض', 'status' => 'scrapped', 'cost' => 0]);
+        if ($router && Maintenance::where('item_id', $router->id)->doesntExist()) {
+            Maintenance::create([
+                'item_id' => $router->id,
+                'reported_by' => $head?->id,
+                'description' => 'عطل في اللوحة الأم',
+                'notes' => 'شركة الصيانة المعتمدة',
+                'status' => Maintenance::REPAIRING,
+                'cost' => 0,
+            ]);
+        }
+
+        if ($head && ActivityLog::count() === 0) {
+            ActivityLog::create([
+                'user_id' => $head->id,
+                'action' => 'setting_update',
+                'description' => 'تهيئة النظام وإضافة البيانات التجريبية',
+            ]);
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\InventorySession;
 use App\Models\InventorySessionItem;
 use App\Models\Item;
@@ -69,6 +70,8 @@ class InventoryController extends Controller
             });
         });
 
+        ActivityLog::record('inventory_start', "بدأ جلسة الجرد \"{$request->name}\" وجمّد الأرصدة");
+
         return back()->with('success', 'تم إنشاء جلسة الجرد وتجميد الأرصدة بنجاح.');
     }
 
@@ -134,6 +137,8 @@ class InventoryController extends Controller
             ]);
         });
 
+        ActivityLog::record('inventory_resolve', "سوّى فروقات جلسة الجرد \"{$session->title}\" بقرار: {$request->decision}");
+
         return back()->with('success', 'تمت تسوية الفروقات وتعديل الأرصدة بنجاح.');
     }
 
@@ -154,6 +159,8 @@ class InventoryController extends Controller
                 'approved_by' => $request->user()->id,
             ]);
         });
+
+        ActivityLog::record('inventory_close', "اعتمد نتيجة الجرد \"{$session->title}\" وأغلق الجلسة");
 
         return back()->with('success', 'تم اعتماد نتيجة الجرد وإغلاق الجلسة نهائياً بنجاح.');
     }

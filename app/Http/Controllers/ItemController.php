@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Maintenance;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -18,7 +19,7 @@ class ItemController extends Controller
 
         if ($type == 'low_stock') {
             // منخفضة وليست نافدة (النافدة تظهر في "المواد الناقصة")
-            $query->where('current_stock', '>', 0)->where('current_stock', '<=', 5);
+            $query->where('current_stock', '>', 0)->where('current_stock', '<=', Setting::lowStockThreshold());
             $pageTitle = "المواد منخفضة المخزون";
         } elseif ($type == 'damaged') {
             // المواد التي لديها سجل صيانة غير مكتمل (قيد الانتظار أو الإصلاح أو الإتلاف)

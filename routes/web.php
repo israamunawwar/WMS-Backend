@@ -43,9 +43,14 @@ Route::middleware(['auth', 'verified', 'role:super_admin|admin'])->group(functio
     Route::post('/inventory/count', [InventoryController::class, 'count'])->name('inventory.count');
 
     Route::get('/maintenance', [MaintenanceController::class, 'index'])->name('maintenance.index');
+    Route::post('/maintenance', [MaintenanceController::class, 'store'])->name('maintenance.store');
+    Route::patch('/maintenance/{maintenance}', [MaintenanceController::class, 'decide'])->name('maintenance.decide');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::post('/settings/categories', [SettingController::class, 'storeCategory'])->name('settings.categories.store');
+    Route::delete('/settings/categories/{category}', [SettingController::class, 'destroyCategory'])->name('settings.categories.destroy');
 });
 
 // تسوية الفروقات واعتماد الجرد: رئيس القسم فقط

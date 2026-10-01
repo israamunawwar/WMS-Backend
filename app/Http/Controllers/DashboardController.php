@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\Maintenance;
 use App\Models\Order;
+use App\Models\Setting;
 
 class DashboardController extends Controller
 {
@@ -14,7 +15,7 @@ class DashboardController extends Controller
         // 1. إحصائيات المخزون (نفس تعريفات فلاتر صفحة المواد)
         $totalItems = Item::count();
         $totalCategories = Category::count();
-        $lowStockItems = Item::where('current_stock', '>', 0)->where('current_stock', '<=', 5)->count();
+        $lowStockItems = Item::where('current_stock', '>', 0)->where('current_stock', '<=', Setting::lowStockThreshold())->count();
         $missingItems = Item::where('current_stock', 0)->count();
         $damagedItems = Maintenance::where('status', '!=', 'fixed')->distinct()->count('item_id');
 

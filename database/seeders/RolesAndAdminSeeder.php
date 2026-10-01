@@ -2,28 +2,37 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class RolesAndAdminSeeder extends Seeder
 {
+    /**
+     * حسابات تجريبية للتطوير فقط، غيّروا كلمات المرور (أو احذفوها) قبل أي نشر حقيقي.
+     */
+    private const DEMO_PASSWORD = 'password123';
+
     public function run(): void
     {
-        // إنشاء الأدوار
-        Role::create(['name' => 'super_admin']);
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'trainer']);
+        foreach (['super_admin', 'admin', 'trainer'] as $role) {
+            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
+        }
 
-        // إنشاء الحساب
-        $superAdmin = User::create([
-            'name' => 'رئيس قسم الـ IT',
-            'email' => 'head@it.edu', 
-            'password' => Hash::make('password123'), 
-        ]);
+        $accounts = [
+            ['head@it.edu', 'رئيس قسم الـ IT', 'super_admin'],
+            ['warehouse@it.edu', 'أمين المستودع', 'admin'],
+            ['trainer@it.edu', 'مدرب تجريبي', 'trainer'],
+        ];
 
-        // ربط الحساب بصلاحية رئيس القسم
-        $superAdmin->assignRole('super_admin');
+        foreach ($accounts as [$email, $name, $role]) {
+            $user = User::firstOrCreate(
+                ['email' => $email],
+                ['name' => $name, 'password' => Hash::make(self::DEMO_PASSWORD), 'is_active' => true],
+            );
+
+            $user->syncRoles([$role]);
+        }
     }
 }

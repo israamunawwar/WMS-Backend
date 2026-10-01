@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -50,6 +51,8 @@ class UserController extends Controller
 
         $user->assignRole($request->role);
 
+        ActivityLog::record('user_create', "أنشأ حساب المستخدم \"{$user->name}\" بدور {$request->role}");
+
         return back()->with('success', 'تم إضافة المستخدم بنجاح.');
     }
 
@@ -67,6 +70,8 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
+        ActivityLog::record('user_update', "حدّث بيانات المستخدم \"{$user->name}\"");
+
         return back()->with('success', 'تم تحديث بيانات المستخدم بنجاح.');
     }
 
@@ -81,6 +86,8 @@ class UserController extends Controller
         }
 
         $user->syncRoles([$request->role]);
+
+        ActivityLog::record('user_role', "غيّر دور المستخدم \"{$user->name}\" إلى {$request->role}");
 
         return back()->with('success', 'تم تحديث صلاحية المستخدم بنجاح.');
     }
@@ -97,6 +104,8 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        ActivityLog::record('user_password', "أعاد تعيين كلمة مرور المستخدم \"{$user->name}\"");
+
         return back()->with('success', 'تم إعادة تعيين كلمة المرور بنجاح.');
     }
 
@@ -111,6 +120,8 @@ class UserController extends Controller
         $user->update([
             'is_active' => !$user->is_active,
         ]);
+
+        ActivityLog::record('user_status', ($user->is_active ? 'فعّل' : 'عطّل')." حساب المستخدم \"{$user->name}\"");
 
         return back()->with('success', 'تم تغيير حالة الحساب بنجاح.');
     }
@@ -128,6 +139,8 @@ class UserController extends Controller
         }
 
         $user->delete();
+
+        ActivityLog::record('user_delete', "حذف حساب المستخدم \"{$user->name}\"");
 
         return back()->with('success', 'تم حذف المستخدم بنجاح.');
     }
