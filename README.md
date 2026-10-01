@@ -1,5 +1,7 @@
 # Warehouse Management System (WMS)
 
+![Tests](https://github.com/israamunawwar/WMS-Backend/actions/workflows/tests.yml/badge.svg)
+
 A web-based system for managing the IT department's warehouse and lab equipment at **Damascus Intermediate Institute**: stock tracking, material requests from trainers, annual stock-take, maintenance, audit trail and reports.
 
 Built with **Laravel 12**, Blade, Alpine.js and Tailwind CSS. The interface is Arabic (RTL).
