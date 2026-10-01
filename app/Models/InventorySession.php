@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class InventorySession extends Model
 {
     use HasFactory;
-    protected $fillable = ['title', 'scheduled_date', 'status', 'notes', 'user_id']; // user_id للمسؤول عن الجلسة
+    protected $fillable = ['title', 'created_by', 'approved_by', 'status'];
 
     public function inventorySessionItems()
     {

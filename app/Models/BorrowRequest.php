@@ -6,5 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class BorrowRequest extends Model
 {
-    protected $fillable = ['item_id', 'user_id', 'status', 'start_date', 'end_date'];
+    protected $fillable = ['user_id', 'lab_id', 'status', 'expected_return_date', 'notes'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function lab()
+    {
+        return $this->belongsTo(Lab::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(BorrowRequestItem::class);
+    }
 }
